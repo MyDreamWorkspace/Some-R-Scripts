@@ -1,0 +1,547 @@
+[1/17/2023 1:13 PM]
+Hi
+
+[1/17/2023 1:14 PM]
+I will sent you codes which related to task
+
+
+[1/17/2023 1:17 PM]
+Decision Trees
+Decision tree
+Decision tree
+#dataset = read.csv("sna.csv") #from working directory
+dataset=read.csv("http://imul.math.uni.lodz.pl/~bartkiew/ml/data/sna.csv")
+This sna.csv dataset contains information about users of the social network.
+
+user id
+gender
+age
+estimated salary
+income
+str(dataset)
+dataset = dataset[2:5] # or you can write dataset=dataset[-1]
+#both  commands turn off the first column
+In the last column, we put information about which users responded positively to the ads and bought the product, and which responded negatively by not buying the product. This is numerical information, but we need a factor to build the tree.
+
+dataset$income=as.factor(dataset$income)
+summary(dataset)
+We divide the full set into a training set and a test set. We place 70% of the observations in the training set and 30% of all observations in the test set.
+
+We use the catools package.
+
+# Splitting the dataset into the Training set and Test set
+install.packages("caTools")
+library(caTools)
+set.seed(123)
+split = sample.split(dataset$income, SplitRatio = 0.7)
+training_set = subset(dataset, split == TRUE)
+test_set = subset(dataset, split == FALSE)
+
+sample.split(( Y, SplitRatio) function
+
+Split data from vector Y into two sets in predefined ratio while preserving relative ratios of different labels in Y. Used to split the data used during classification into train and test subsets.
+
+We check the distribution of the variable in the set -function table.
+
+prop.table(table(dataset$income))
+prop.table(table(training_set$income))
+prop.table(table(test_set$income))
+There are several types of decision tree algorithms in R. We will look at the traditional algorithm, known as rpart, and analyse the sna.csv data.
+
+libr
+# install.packages("rpart")
+library(rpart)
+model= rpart(formula = income ~ ., data = training_set)
+
+The rpart function (from the rpart package) builds a tree.
+
+In the rpart model, we can specify the target variable (income) to the left of the tilde (~) and the predictor variables to the right of the tilde. We will use dot notation (.) to indicate that we will consider all variables.
+
+We use the rpart.plot() function from the package ratle to visualize the tree
+
+library(rpart.plot)
+rpart.plot(model)
+
+[1/17/2023 1:19 PM]
+Options to fit decision trees
+These are the important control parameters that are used by rpart to grow a tree.
+
+cp parameters: The cp (complexity parameter) is an option used in rpart that controls how liberal you want the splitting algorithm to be when it decides whether or not to split a node. Utilizing a small cp value (< 0.01) can generate an enormous tree that can contain unexplainable splits, while a tree with a high cp value (> 0.05) can produce a tree containing only obvious information. Therefore, it is important to set the cp level at a number that generates a fair amount of nodes, yet remains explainable.
+maximum depth: If you want the number of levels of the tree to stop at a certain level, specify this number as an option within the function call. Some people will stop a decision tree after 10 levels or so, assuming that there will be no interpretable information beyond that point. However, if you suspect that there may be single nodes that pop up that could contain the information you are looking for, by all means continue to grow the tree. However, remember as you extend the number of levels, that will increase the computation time and memory needed. It is always a good idea to see limits on the growth of the tree, even if it is a high number.
+minbucket: Many analysts like to concentrate on terminal nodes. However, a terminal node needs to be a minimum size for it to have statistical meaning. The only exception would be if you were looking for true outliers or anomalies. But generally, for segmentation, we want groups that are large enough to have meaning.
+minsplit: This option controls how many observations a node has to have in order to even be considered for a split.
+Observe how different parameters affect the appearance of the tree and the correctness of classification in the confiusion matrix.
+
+#minsplit
+control=rpart.control(minsplit=52)
+model.52 <- rpart(income ~ .,data = training_set, control=control)
+fancyRpartPlot(model.52)
+model.52.pred<-predict(model.52, test_set ,type = "class")
+table(test_set$income,model.52.pred)
+#minbucket
+control=rpart.control(minbucket=37)
+model.37 <- rpart( income~ .,data = training_set,control=control)
+fancyRpartPlot(model.37)
+model.37.pred<-predict(model.37, test_set ,type = "class")
+table(test_set$income,model.37.pred)
+#minsplit minbucket
+control=rpart.control(minsplit=10, minbucket =103 )
+model.103 <- rpart(income ~ .,data = training_set, control=control)
+fancyRpartPlot(model.103)
+model.103.pred<-predict(model.103, test_set ,type = "class")
+table(test_set$income,model.103.pred)
+control=rpart.control(minsplit=253,minbucket = 80)
+model.25380 <- rpart(income ~ .,data = training_set, control=control)
+fancyRpartPlot(model.25380)
+model.25380.pred<-predict(model.25380, test_set ,type = "class")
+table(test_set$income,model.25380.pred)
+In the following example, we build a full decision tree with cp = and minbucket = equal to zero.
+control <- rpart.control(cp=0, minbucket=0)
+model.full <- rpart(income ~ .,data = training_set,control=control)
+model.full
+fancyRpartPlot(model.full)
+model.full.pred<-predict(model.full , test_set ,type = "class")
+table(test_set$income,model.full.pred)
+acc(test_set$income,model.full.pred)
+#cptable
+
+[1/17/2023 1:20 PM]
+Task 2 source codes
+
+[1/17/2023 1:24 PM]
+Task 1 source codes
+
+[1/17/2023 1:24 PM]
+ACC functions and ROC function
+acc <- function(y.true, y.pred) { sum(y.pred==y.true)/length(y.true) }
+
+#install.packages("ROCR")
+library(ROCR)
+roc.function<-function(y_pred,testY){
+pred <- prediction(as.numeric(y_pred), as.numeric(testY))
+perf.auc <- performance(pred, measure = "auc")
+auc<-round(unlist(perf.auc@y.values),2)
+perf <- performance(pred,"tpr","fpr")
+plot(perf,main=paste("ROC and AUC=",auc),colorize=TRUE, lwd = 3)
+abline(a = 0, b = 1, lwd = 2, lty = 2) #diagonal
+}
+Model
+dataset<-read.csv("http://imul.math.uni.lodz.pl/~bartkiew/ml/data/sna.csv", stringsAsFactors = T)
+dataset <- dataset[2:5]
+dataset$income <- factor(dataset$income, levels = c(0, 1))
+
+# install.packages("caTools")
+library(caTools)
+set.seed(123)
+split = sample.split(dataset$income, SplitRatio = 0.7)
+training_set = subset(dataset, split == TRUE)
+test_set = subset(dataset, split == FALSE)
+# install.packages("rpart")
+library(rpart)
+model= rpart(formula = income ~ ., data = training_set)
+fancyRpartPlot(model)
+y_pred = predict(model, newdata = training_set, type = 'class')
+table(y_pred,training_set$income)
+error=1-acc(y_pred,training_set$income)
+#error on the training set for the optimal model
+error
+
+model.y_pred = predict(model, newdata = test_set, type = 'class')
+table(model.y_pred,test_set$income)
+error=1-acc(model.y_pred,test_set$income)
+#error on the test set for the optimal model
+error
+
+#ROC curve for the optimal model
+roc.function(model.y_pred, test_set$income)
+Underfitting
+#Underfitted tree model
+control=rpart.control(minsplit=172)
+model.172 <- rpart(income~ .,training_set, control=control)
+fancyRpartPlot(model.172)
+
+y_pred.172 = predict(model.172, newdata = training_set, type = 'class')
+table(y_pred.172,training_set$income)
+error=1-acc(y_pred.172,training_set$income)
+#error on the training set for the underfitted model
+error
+
+model.172.pred<-predict(model.172, test_set ,type = "class")
+table(model.172.pred,test_set$income)
+error=1-acc(model.172.pred,test_set$income)
+#error on the test set for the underfitted model
+error
+
+#ROC curve for the underfitted model
+roc.function(model.172.pred, test_set$income)
+Overfitting
+#Overfitted tree model
+control <- rpart.control(cp=0, minbucket=0, minsplit = 0)
+model.full <- rpart(income~ .,training_set, control = control)
+model.full
+fancyRpartPlot(model.full)
+
+y_pred.full = predict(model.full, newdata = training_set, type = 'class')
+table(y_pred.full,training_set$income)
+error=1-acc(y_pred.full,training_set$income)
+#error on the training set for the overfitted model
+error
+
+model.full.pred<-predict(model.full , test_set ,type = "class")
+table(model.full.pred,test_set$income)
+error=1-acc(model.full.pred,test_set$income)
+#error on the test set for the overfitted model
+error
+#ROC curve for the overfitted  model
+roc.function(model.full.pred, test_set$income)
+Because we typically like to explain away as much variation in our data as possible, and because we often have many more variables than are important for our problem, underfitting is less frequently a problem than overfitting
+
+[1/17/2023 1:26 PM]
+install.packages("caret")
+library(caret)
+control = trainControl(method="cv", number=10)
+model.caret = train(income ~ .,data=training_set, method="rpart", preProcess="scale", trControl=control)
+plot(model.caret)
+model.caret
+model.caret$resample$Accuracy
+sd(model.caret$resample$Accuracy)
+cv.y_pred = predict(model.caret2, newdata = test_set, type = 'raw')
+table(cv.y_pred,test_set$income)
+control = trainControl(method="repeatedcv", number=10,repeats=3)
+model.caret2 = train(income ~ .,data=training_set, method="rpart", preProcess="scale", trControl=control)
+plot(model.caret2)
+model.caret2
+model.caret2$resample$Accuracy
+sd(model.caret2$resample$Accuracy)
+cv.y_pred.2 = predict(model.caret2, newdata = test_set, type = 'raw')
+table(cv.y_pred.2,test_set$income)
+
+[1/17/2023 1:27 PM]
+control = trainControl(method="LOOCV")
+model.caret3 = train(income ~ .,data=training_set, method="rpart", trControl=control)
+plot(model.caret3)
+model.caret3
+cv.y_pred.3 = predict(model.caret3, newdata = test_set, type = 'raw')
+table(cv.y_pred.3,test_set$income)
+
+#other methods
+trainControl <- trainControl(method="LOOCV")
+fit <- train(income ~ .,data=training_set, trControl=trainControl, method="nb")
+fit
+plot(fit)
+trainControl <- trainControl(method="LOOCV")
+fit <- train(income ~ .,data=training_set, trControl=trainControl, method="knn")
+fit
+plot(fit)
+Every machine learning algorithm will have a different set of hyperparameters associated that will help the model ignore errors (noise), and therefore improve generalizing capabilities.
+
+
+
+
+Ramazan Ağamalıyev, [1/22/2023 5:05 PM]
+Boosting - German credit 
+Dataset 
+gc<-read.csv("http://imul.math.uni.lodz.pl/~bartkiew/ml/data/germancredit.csv", stringsAsFactors = T) 
+summary(gc) 
+gc$credit_risk <- factor(gc$credit_risk, levels = c(0, 1)) 
+levels(gc$credit_risk)<-c("no","yes") 
+ 
+library(caTools) 
+set.seed(12345) 
+split = sample.split(gc$credit_risk, SplitRatio = 0.7) 
+gc.Train <- subset(gc, split == TRUE) 
+gc.Test <- subset(gc, split == FALSE) 
+summary(gc.Test) 
+prop.table(table(gc$credit_risk)) 
+prop.table(table(gc.Train$credit_risk)) 
+prop.table(table(gc.Test$credit_risk)) 
+To remind, we are building a tree model. 
+ 
+library(rpart) 
+gc.rpart <- rpart(credit_risk~., gc.Train) 
+library(rattle) 
+fancyRpartPlot(gc.rpart) 
+plot(gc.rpart) 
+gc.pred.rpart <- predict(gc.rpart,newdata = gc.Test,type="class") 
+table(gc.pred.rpart,gc.Test$credit_risk) 
+acc.rpart=acc(gc.pred.rpart, gc.Test$credit_risk) 
+acc.rpart 
+roc.function(gc.pred.rpart, gc.Test$credit_risk)
+
+Ramazan Ağamalıyev, [1/22/2023 5:05 PM]
+Dummy coding 
+A dummy variable is either 1 or 0 and 1 can be represented as either True or False and 0 can be represented as False or True depending upon the user. This variable is used to categorize the characteristic of an observation. For example, a person is either male or female, discipline is either good or bad, etc. 
+ 
+In the caret package we have the function dummyVars, which allows factor variables to be converted into a numerical type. 
+ 
+library(caret) 
+ex<- data.frame(num = 1:3, 
+ gender = c("m", "m", "f"), 
+ animal = c("cat", "dog", "fish"), 
+ dates = as.Date(c("2023-01-01", "2022-12-31","2021-01-01"))) 
+d <- dummyVars("~ .", ex, fullRank = T) 
+str(d) 
+d2 = as.data.frame(predict(d, newdata=ex)) 
+names(d2) 
+d2 
+Attention should be paid to the role of the parameter  fullRank. For fullrank=T we have one variable less than the number of existing categories so as to avoid correlated variables, but also to save space. On the other hand, for fullrank=F we get as many columns as the number of variables in the factors. 
+ 
+dd <- dummyVars("~ .", ex, fullRank = F) 
+dd 
+dd2 = as.data.frame(predict(dd, newdata=ex)) 
+names(dd2) 
+dd2
+
+Ramazan Ağamalıyev, [1/22/2023 5:05 PM]
+Gradient boosting - gbm 
+Gradient boosting gbm 
+install.packages("gbm") 
+library(gbm) 
+ 
+Gradient boosting ensembles weak learners and creates a new base learner that maximally correlates with the negative gradient of the loss function. 
+ 
+The set used for modelling, must contain only numerical values. 
+ 
+We transform the set gc to numerical form 
+ 
+gc<-read.csv("http://imul.math.uni.lodz.pl/~bartkiew/ml/data/germancredit.csv", stringsAsFactors = T) 
+gc.dv <- dummyVars("~ .",gc[-21], fullRank = F) 
+gc.d = as.data.frame(predict(gc.dv, newdata=gc[-21])) 
+gc.d=cbind(gc.d,gc[21]) 
+str(gc.d) 
+summary(gc.d) 
+library(caTools) 
+set.seed(12345) 
+split = sample.split(gc.d$credit_risk, SplitRatio = 0.7) 
+gc.d.Train <- subset(gc.d, split == TRUE) 
+gc.d.Test <- subset(gc.d, split == FALSE) 
+str(gc.d.Train) 
+ 
+prop.table(table(gc.d$credit_risk)) 
+prop.table(table(gc.d.Train$credit_risk)) 
+prop.table(table(gc.d.Test$credit_risk)) 
+The gbm function 
+Parameters used: 
+ 
+distribution 
+bernoulli - for binary classifications 0-1 
+gaussian - (regresion) root mean square errors 
+adaboost - for binary classifications 0-1 
+poisson - counting data 
+shrinkage <-> learning rate  
+bag.fraction - coefficient controlling the selection of observations in the training set - part of the observations from the training set, is used to build the next tree. The default is 0.5. For small collections it is worth increasing this parameter. 
+interaction.depth - the default depth of each tree is 1, which means that we create a set of stumps 
+n.minobsinnode  - minimum number of observations per leaf 
+n.trees - the number of iterations
+
+Ramazan Ağamalıyev, [1/22/2023 5:06 PM]
+gc.d.gbm <- gbm(credit_risk~.,distribution="bernoulli",data= gc.d.Train, 
+ n.trees=500,shrinkage = 0.05) 
+gc.d.gbm 
+summary(gc.d.gbm) 
+We use the gbm.perf function to find the optimum iteration.  The error measurement here is a bernoulli distribution, which we have defined earlier in the training stage. The blue dash line on the plot shows where the optimum iteration is. 
+ 
+n.trees=gbm.perf(gc.d.gbm) 
+Testing the built model 
+ 
+gc.d.gbm.pred=predict(gc.d.gbm, gc.d.Test, n.trees = n.trees) 
+  
+ 
+Then, we use the predict function to obtain the odd value of a log in each testing case returned from the Bernoulli loss function. In order to get the best prediction result, one can set the n.trees argument to an optimum iteration number. 
+ 
+However, as the returned value is an odd value log, we still have to determine the best cut off to determine the label. Therefore, we use the roc function to generate an ROC curve and get the cut off with the maximum 
+accuracy. 
+ 
+. 
+ 
+So 
+ 
+#install.packages("pROC") 
+library(pROC) 
+gbm.roc = roc(gc.d.Test$credit_risk, gc.d.gbm.pred) 
+x=plot(gbm.roc) 
+x 
+coords(gbm.roc, "best") 
+ 
+ 
+ 
+gc.d.gbm.pred.class = ifelse(gc.d.gbm.pred > 0.6883459, 1, 0) 
+ 
+table(gc.d.gbm.pred.class, gc.d.Test$credit_risk) 
+acc(gc.d.gbm.pred.class, gc.d.Test$credit_risk) 
+Note that the shrinkage parameter cannot be too low. This is because we have obtained a model without significant variables on the target variable. 
+ 
+gc.d.gbm2 <- gbm(credit_risk~.,distribution="bernoulli",data= gc.d.Train, 
+ n.trees=500,shrinkage = 0.00001) 
+gc.d.gbm2 
+gbm.perf(gc.d.gbm,plot.it=TRUE) 
+gbm.perf(gc.d.gbm2,plot.it=TRUE) 
+ 
+Dataset: sna 
+ 
+sna<-read.csv("http://imul.math.uni.lodz.pl/~bartkiew/ml/data/sna.csv", stringsAsFactors = T) 
+summary(sna) 
+sna=sna[-1] 
+sn.dv <- dummyVars("~.",sna[-2:-4], fullRank = F) 
+sn.d = as.data.frame(predict(sn.dv, newdata=sna[-2:-4])) 
+sn.d=cbind(sn.d,sna[2:4]) 
+str(sn.d) 
+summary(sn.d) 
+library(caTools) 
+set.seed(12345) 
+split = sample.split(sn.d$Purchased, SplitRatio = 0.7) 
+sn.d.Train <- subset(sn.d, split == TRUE) 
+sn.d.Test <- subset(sn.d, split == FALSE) 
+str(sn.d.Train) 
+prop.table(table(sn.d$Purchased)) 
+prop.table(table(sn.d.Train$Purchased)) 
+prop.table(table(sn.d.Test$Purchased)) 
+ 
+sn.d.gbm <- gbm(Purchased~.,distribution="bernoulli",data= sn.d.Train, 
+ n.trees=500,shrinkage = 0.05) 
+sn.d.gbm 
+n.trees.1=gbm.perf(sn.d.gbm) 
+ 
+summary(sn.d.gbm) 
+summary(sn.d.gbm,n.trees=1) # for the first tree 
+summary(sn.d.gbm,n.trees=500) 
+sn.d.gbm.pred=predict(sn.d.gbm, sn.d.Test, n.trees = 500,type = "response") 
+pp=predict.gbm(sn.d.gbm, sn.d.Test,type = "response") 
+klasa = ifelse(pp > 0.5, 1, 0) 
+table(klasa) 
+ 
+table(klasa, sn.d.Test$Purchased) 
+acc(klasa, sn.d.Test$Purchased) 
+roc.function(klasa, sn.d.Test$Purchased)
+
+Ramazan Ağamalıyev, [1/22/2023 5:06 PM]
+XGBoost 
+XGBoost  
+ 
+The XGBoost model requires that 
+ 
+all variables were numeric, 
+target variable - binary 0 and 1 (in case of german credit) 
+matrix as an argument. In R, you can use Matrix :: sparse.model.matrix or caret :: dummyVars,or other. 
+We transform the set gc 
+ 
+gc<-read.csv("http://imul.math.uni.lodz.pl/~bartkiew/ml/data/germancredit.csv", stringsAsFactors = T) 
+summary(gc) 
+1. into numeric form 
+ 
+library(caret) 
+gc.dv <- dummyVars("~ .",gc[-21], fullRank = F) 
+gc.d = as.data.frame(predict(gc.dv, newdata=gc[-21])) 
+gc.d=cbind(gc.d,gc[21]) 
+str(gc.d) 
+summary(gc.d) 
+library(caTools) 
+set.seed(12345) 
+split = sample.split(gc.d$credit_risk, SplitRatio = 0.7) 
+gc.d.Train <- subset(gc.d, split == TRUE) 
+gc.d.Test <- subset(gc.d, split == FALSE) 
+2. and into matrix form: 
+ 
+#install.packages("Matrix") 
+library(Matrix) 
+mat.train <- as.matrix(gc.d.Train[,-62]) 
+m.train <- as(mat.train,"dgCMatrix") 
+mat.test<- as.matrix(gc.d.Test[,-62]) 
+m.test <- as(mat.test,"dgCMatrix") 
+We use the xgboost function 
+ 
+#install.packages("xgboost") 
+library(xgboost) 
+gc.xgb <- xgboost(data=m.train,label=gc.d.Train$credit_risk, 
+ nrounds = 500,objective="binary:logistic", 
+ eval_metric = "logloss") 
+xgb.predict <- predict(gc.xgb, m.test) 
+xgb.pred.class = ifelse(xgb.predict > 0.5, 1, 0) 
+table(xgb.pred.class,gc.d.Test$credit_risk) 
+acc(xgb.pred.class,gc.d.Test$credit_risk) 
+xgb.roc = roc(xgb.pred.class,gc.d.Test$credit_risk) 
+x=plot(xgb.roc) 
+x 
+coords(xgb.roc, "best") 
+ 
+ 
+Some selected parameters  
+ 
+nrounds[default=100] - maximum number of iterations.  
+eta[default=0.3][range: (0,1)] - controls the learning rate, i.e. the speed at which our model learns patterns in the data. After each round, it reduces the feature weights to reach the best optimum. A lower eta leads to slower computation. It must be supported by increasing the number of iterations. It is usually in the range of 0.01 - 0.3. 
+gamma[default=0][range: (0,Inf)] - controls regularity (or prevents overfitting). The optimal gamma value depends on the dataset and other parameter values. Higher value, higher regularity. default = 0 means no regularity. gamma brings improvement, with low trees (low max_depth). 
+max_depth[default=6][range: (0,Inf)] - tree depth. Taller trees - more complex model; greater chance of overfitting. There is no standard value for max_depth. Large datasets require tall trees. 
+min_child_weight[default=1][range:(0,Inf)] - in regression refers to the minimum number of observations required in the descendant node. In classification, if a leaf node has a minimum sum of observation weights (calculated by the second-order partial derivative) less than min_child_weight, tree splitting stops. 
+subsample[default=1][range: (0,1)] - number of observations supplied to the tree. Typically, its values are in the range (0.5-0.8) 
+colsample_bytree[default=1][range: (0,1)] the number of variables in the tree. Typically, its values are in the range (0.5,0.9) 
+Model loss and evaluation functions. In addition to the parameters listed below, a custom loss and evaluation function can be used. 
+ 
+objective[default=reg:linear] 
+reg:linear - for linear regression 
+binary:logistic - Logistic regression for binary classification. Returns class probabilities. 
+eval_metric [no default, depends on the chosen objective] - these metrics are used to assess the accuracy of the model on test data. For regression, the default metric is RMSE. For classification, the default metric is error. 
+The available error functions are as follows: 
+mae - mean absolute error (used in regression) 
+Logloss - logit (used in classification) 
+AUC - area under the curve (used in classification) 
+RMSE - root mean square error (used in regression) 
+error - binary classification error rate 
+ 
+ 
+Cross-validation 
+We claimed that the xgboost package does not require extra coding for the crossvalidation analysis. The xgb.cv function is useful here, and it works with the same arguments as the xgboost function with the cross-validation folds specified by the 
+nfold option. Here, we choose
+
+Ramazan Ağamalıyev, [1/22/2023 5:06 PM]
+nfold=10. 
+ 
+gc.xgb.cv <- xgb.cv(data=m.train,label=gc.d.Train$credit_risk, 
+ nfold=10,nrounds = 100,objective="binary:logistic", 
+ prediction = TRUE,eval_metric = "logloss", 
+ early_stopping_rounds = 55) 
+xgb.cv.predict <- gc.xgb.cv$pred 
+gc.xgb.cv$best_iteration 
+gc.xgb.cv$best_ntreelimit 
+ 
+gc.xgb2 <- xgboost(data=m.train,label=gc.d.Train$credit_risk, 
+ nrounds = 11,objective="binary:logistic", 
+ eval_metric = "logloss") 
+xgb.predict2 <- predict(gc.xgb2, m.test) 
+ 
+table(gc.d.Test$credit_risk,c(xgb.predict2>0.5)) 
+acc(gc.d.Test$credit_risk,c(xgb.predict2>0.5)) 
+roc.function(gc.d.Test$credit_risk,c(xgb.predict2>0.5)) 
+Importance of variables 
+ 
+importance_matrix <- xgb.importance(colnames(m.train),model = gc.xgb2) 
+ 
+xgb.plot.importance(importance_matrix, top_n = 10,  
+ measure = "Gain", 
+ main="waznosc zmiennych") 
+You can also tune the model using the caret package 
+ 
+ 
+#tuning z caret 
+library(caret) 
+tunegrid <- expand.grid(nrounds = 100, 
+ max_depth = c(4,6,10), 
+ eta = seq(0.1,0.4,len=4), 
+ gamma = 0, 
+ colsample_bytree = 1, 
+ min_child_weight = 1, 
+ subsample = 1) 
+trcontrol <- trainControl(method = "repeatedcv", 
+ number = 10,  
+ repeats = 2,  
+ allowParallel = T) 
+xg_train = train(credit_risk~., 
+ data= gc, 
+ trControl = trcontrol, 
+ tuneGrid = tunegrid, 
+ method = "xgbTree") 
+plot(xg_train) 
+xg_train$bestTune 
+xg_train$results
+
+Ramazan Ağamalıyev, [1/22/2023 5:07 PM]
+Soo,These all codes related to task

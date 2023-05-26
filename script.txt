@@ -1,0 +1,207 @@
+data = read.csv("D://Dev/R programming language/income.csv"
++ 
++ 
++ 
++ 
+
++ > data = read.csv("D://Dev/R programming language/income.csv")
+> head(data)
+  age workClassification educationLevel educationYears          maritalStatus         occupation   relationship
+1  50   Self-emp-not-inc      Bachelors             13     Married-civ-spouse    Exec-managerial        Husband
+2  38            Private        HS-grad              9               Divorced  Handlers-cleaners  Not-in-family
+3  53            Private           11th              7     Married-civ-spouse  Handlers-cleaners        Husband
+4  28            Private      Bachelors             13     Married-civ-spouse     Prof-specialty           Wife
+5  37            Private        Masters             14     Married-civ-spouse    Exec-managerial           Wife
+6  49            Private            9th              5  Married-spouse-absent      Other-service  Not-in-family
+    race  gender workHours  nativeCountry income
+1  White    Male        13  United-States  <=50K
+2  White    Male        40  United-States  <=50K
+3  Black    Male        40  United-States  <=50K
+4  Black  Female        40           Cuba  <=50K
+5  White  Female        40  United-States  <=50K
+6  Black  Female        16        Jamaica  <=50K
+> create_train_test <- function(data, size = 0.8, train = TRUE){
++ n_row = nrow(data)
++ total_number = size * n_row
++ total_index <- 1:total_number
++ if(train == TRUE)
++ { return(data[total_index, ])}
++ else{ return(data[-total_index,])}}
+> shuffle_index <- sample(1:nrow(data))
+> head(shuffle_index)
+[1] 26104 28614  8220  7458 28502 22921
+> data = data[shuffle_index, ]
+> prop.table(table(train_set))
+Error in table(train_set) : attempt to make a table with >= 2^31 elements
+> prop.table(table(train_set$income))
+
+    <=50K      >50K 
+0.7600474 0.2399526 
+> train_set <- create_train_test(data, 0.7, train = TRUE)
+> test_set <- create_train_test(data, 0.7, train = FALSE)
+> prop.table(table(train_set$income))
+
+    <=50K      >50K 
+0.7609688 0.2390312 
+> prop.table(table(test_set$income))
+
+    <=50K      >50K 
+0.7550164 0.2449836 
+> dim(train_set)
+[1] 22792    12
+> dim(test_set)
+[1] 9768   12
+> dim(data)
+[1] 32560    12
+> incomeModel = rpart(income~.,data, method="class")
+> incomeModel <- rpart(income~.,data, method="class")
+> predict_unseen <- predict(incomeModel, test_set, type="class")
+> table_mat <- table(test_set$income, predict_unseen)
+> table_mat
+        predict_unseen
+          <=50K  >50K
+   <=50K   6780   595
+   >50K    1057  1336
+> accuracy_test <- sum(diag(table_mat)/sum(table_mat)
++ )
+> accuracy_test <- sum(diag(table_mat))/sum(table_mat)
+> print(paste("Accuracy for test:", accuracy_test))
+[1] "Accuracy for test: 0.830876330876331"
+> rpart.control(minsplit = 20, minbucket = round(minsplit/3), maxdepth = 30)
+Error in rpart.control(minsplit = 20, minbucket = round(minsplit/3), maxdepth = 30) : 
+  object 'minsplit' not found
+> rpart.control(minsplit = 20, minbucket = round(20 / 3), maxdepth = 30)
+$minsplit
+[1] 20
+
+$minbucket
+[1] 7
+
+$cp
+[1] 0.01
+
+$maxcompete
+[1] 4
+
+$maxsurrogate
+[1] 5
+
+$usesurrogate
+[1] 2
+
+$surrogatestyle
+[1] 0
+
+$maxdepth
+[1] 30
+
+$xval
+[1] 10
+
+> accuracy_tune <- function(model){
++ predict_unseen <- predict(model, test_set, type="class")
++ table_mat <- table(test_set$income, predict_unseen)
++ accuracy_test <- sum(diag(table_mat))/sum(Table_mat)
++ return accuracy_test
+Error: unexpected symbol in:
+"accuracy_test <- sum(diag(table_mat))/sum(Table_mat)
+return accuracy_test"
+> accuracy_tune <- function(model){
++ predict_unseen <- predict(model, test_set, type="class")
++ table_mat <- table(test_set$income, predict_unseen)
++ accuracy_test <- sum(diag(table_mat))/sum(Table_mat)
++ accuracy_test <- sum(diag(table_mat))/sum(table_mat)
++ return accuracy_test}
+Error: unexpected symbol in:
+"accuracy_test <- sum(diag(table_mat))/sum(table_mat)
+return accuracy_test"
+> accuracy_tune <- function(model){
++ predict_unseen <- predict(model, test_set, type = "class")
++ table_mat <- table(test_set$income, predict_unseen)
++ accuracy_test <- sum(diag(table_mat))/sum(table_mat)
++ accuracy_test
++ }
+> control <- rpart.control(minsplit = 4, minbucket = 2, maxdepth = 3, cp = 0)
+> tune_fit <- rpart(income~., test_set, method="class", control = control)
+> accuracy_tune(tune_fit)
+[1] 0.82586
+> control=rpart.control(minsplit=52)
+> model.52 <- rpart(income ~ .,data = training_set, control=control)
+> model.52 <- rpart(income ~ .,train_set, control=control)
+> fancyRpartPlot(model.52)
+Error in fancyRpartPlot(model.52) : 
+  could not find function "fancyRpartPlot"
+> accuracy_tune(model.52)
+Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = attr(object,  : 
+  factor nativeCountry has new levels  Holand-Netherlands
+> model.52 <- rpart(income ~ .,test_set, control=control)
+> control
+$minsplit
+[1] 52
+
+$minbucket
+[1] 17
+
+$cp
+[1] 0.01
+
+$maxcompete
+[1] 4
+
+$maxsurrogate
+[1] 5
+
+$usesurrogate
+[1] 2
+
+$surrogatestyle
+[1] 0
+
+$maxdepth
+[1] 30
+
+$xval
+[1] 10
+
+> accuracy_tune(model.52)
+[1] 0.8236077
+> control=rpart.control(minbucket=37)
+> model.37 <- rpart( income~ .,data = training_set,control=control)
+> model.37 <- rpart( income~ .,train_set,control=control)
+> accuracy_tune(model.37)
+Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = attr(object,  : 
+  factor nativeCountry has new levels  Holand-Netherlands
+> control
+$minsplit
+[1] 111
+
+$minbucket
+[1] 37
+
+$cp
+[1] 0.01
+
+$maxcompete
+[1] 4
+
+$maxsurrogate
+[1] 5
+
+$usesurrogate
+[1] 2
+
+$surrogatestyle
+[1] 0
+
+$maxdepth
+[1] 30
+
+$xval
+[1] 10
+
+> model.37.pred<-predict(model.37, test_set, type="class")
+Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = attr(object,  : 
+  factor nativeCountry has new levels  Holand-Netherlands
+> model.37.pred <- predict(model.37, test_set, type="class")
+Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = attr(object,  : 
+  factor nativeCountry has new levels  Holand-Netherlands
